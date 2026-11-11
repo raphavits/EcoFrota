@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EcoFrota</title>
+  <meta name="theme-color" content="#2d4a36">
+  <meta name="description" content="Rotas com menor emissão de CO₂ para frotas de transporte de combustíveis">
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzJkNGEzNiIvPgogIDxwYXRoIGQ9Ik0yNTYgMTEwYy03MCA0MC0xMTAgMTA0LTExMCAxNjhhMTEwIDExMCAwIDAgMCAyMjAgMGMwLTY0LTQwLTEyOC0xMTAtMTY4eiIgZmlsbD0iI2Y3ZjVlYyIvPgogIDxwYXRoIGQ9Ik0yNTYgMTkwdjE5ME0yNTYgMzAwbC01Mi01Mk0yNTYgMzQwbDUyLTUyIiBzdHJva2U9IiMyZDRhMzYiIHN0cm9rZS13aWR0aD0iMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K">
+    <style>
+:root {
+  --bg: #f7f5ec;
+  --card: #fffefa;
+  --ink: #1c2a21;
+  --muted: #5d6b61;
+  --line: #dfdccd;
+  --green: #2d4a36;
+  --green-2: #4a6352;
+  --green-tint: #e3ebe0;
+  --orange: #b5521f;
+  --orange-tint: #f7e6d8;
+  --radius: 16px;
+  --serif: Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.4 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.app { min-height: 100dvh; display: flex; flex-direction: column; }
+.content { flex: 1; width: 100%; max-width: 520px; margin: 0 auto; padding: 14px 20px 110px; }
+.sidebar { display: none; }
+
+/* ---------- tipografia ---------- */
+.eyebrow { color: var(--muted); font-size: 13px; }
+.title { font-family: var(--serif); font-size: 26px; font-weight: 700; margin-top: 2px; letter-spacing: -.01em; }
+.label { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--mono); }
+.unit { font-size: 13px; color: var(--muted); font-weight: 400; }
+
+/* ---------- cartões ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.card.tint { background: var(--green-tint); border-color: transparent; }
+.card.sel { background: var(--green-tint); border-color: var(--green); border-width: 1.5px; }
+.stack { display: grid; gap: 12px; margin-top: 16px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+.hero-num { font-family: var(--serif); font-size: 40px; font-weight: 700; line-height: 1.1; margin: 6px 0 2px; color: var(--green); }
+.stat { text-align: center; padding: 14px 8px; }
+.stat b { display: block; font-size: 22px; font-weight: 600; }
+.stat .label { font-size: 10px; }
+.kpi { min-height: 96px; display: flex; flex-direction: column; justify-content: space-between; }
+.kpi .val { font-family: var(--serif); font-size: 28px; color: var(--green); }
+.kpi .val.warn { color: var(--orange); }
+
+/* ---------- selo ---------- */
+.badge { display: flex; gap: 12px; align-items: center; }
+.badge .ico {
+  width: 36px; height: 36px; border-radius: 50%; flex: none;
+  background: var(--orange-tint); color: var(--orange);
+  display: grid; place-items: center; font-size: 16px;
+}
+.badge small { display: block; color: var(--muted); font-size: 12px; }
+.badge.locked { opacity: .5; }
+
+/* ---------- gráfico ---------- */
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 90px; margin-top: 14px; }
+.bars .bar { flex: 1; background: var(--green-2); border-radius: 4px 4px 2px 2px; min-height: 6px; position: relative; }
+.bars .bar span {
+  position: absolute; bottom: -18px; left: 0; right: 0; text-align: center;
+  font: 10px var(--mono); color: var(--muted);
+}
+.bars.has-labels { margin-bottom: 22px; }
+.bar.now { background: var(--green); }
+
+/* ---------- ranking ---------- */
+.rank { list-style: none; margin: 8px 0 0; padding: 0; }
+.rank li { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.rank li:first-child { border-top: 0; }
+.rank .n { font: 12px var(--mono); color: var(--muted); width: 20px; }
+.rank .name { flex: 1; }
+.rank .pct { font: 700 13px var(--mono); }
+
+/* ---------- alerta ---------- */
+.alert { background: var(--orange-tint); color: var(--orange); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.alert + .alert { margin-top: 8px; }
+
+/* ---------- mapa / rota ---------- */
+.map { background: var(--green-tint); border-radius: var(--radius); overflow: hidden; }
+.map svg { display: block; width: 100%; height: auto; }
+.route-metrics { display: flex; gap: 22px; margin-top: 6px; }
+.route-metrics b { display: block; font-size: 17px; font-weight: 600; }
+.route-metrics span { font-size: 13px; color: var(--muted); }
+.card h3 { font-size: 15px; font-weight: 700; }
+.gain { font: 700 12px var(--mono); margin-top: 8px; color: var(--green); }
+.gain.neg { color: var(--orange); }
+.routes-layout { display: grid; gap: 12px; margin-top: 14px; }
+.route-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+  padding: 6px 12px; font-size: 13px;
+}
+.chip[aria-pressed="true"] { background: var(--green); color: var(--bg); border-color: var(--green); }
+
+/* ---------- botões ---------- */
+.btn {
+  display: block; width: 100%; border: 1px solid var(--green); background: var(--green); color: var(--bg);
+  padding: 14px 18px; border-radius: 14px; font-weight: 600; text-align: center;
+}
+.btn.ghost { background: var(--card); color: var(--green); border-color: var(--line); }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: default; }
+.actions { display: grid; gap: 10px; margin-top: 18px; }
+
+/* ---------- tabelas ---------- */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 8px 0; }
+.table td { padding: 10px 8px 10px 0; border-top: 1px solid var(--line); }
+.tag { font: 700 11px var(--mono); padding: 3px 8px; border-radius: 99px; background: var(--green-tint); color: var(--green); white-space: nowrap; }
+.tag.warn { background: var(--orange-tint); color: var(--orange); }
+.meter { height: 8px; border-radius: 99px; background: var(--green-tint); overflow: hidden; margin-top: 10px; }
+.meter i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
+
+/* ---------- troca de perfil ---------- */
+.role-switch { display: inline-flex; background: var(--green-tint); border-radius: 999px; padding: 3px; gap: 2px; }
+.role-switch button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+.role-switch button[aria-pressed="true"] { background: var(--green); color: var(--bg); }
+.top-switch { margin-bottom: 12px; }
+
+/* ---------- navegação inferior (celular) ---------- */
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; justify-content: space-around;
+  background: var(--bg); border-top: 1px solid var(--line);
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+}
+.bottom-nav a {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1;
+  font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none;
+}
+.bottom-nav a::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .7; }
+.bottom-nav a[aria-current="page"] { color: var(--green); font-weight: 700; }
+.bottom-nav a[aria-current="page"]::before { background: var(--green); opacity: 1; }
+.bottom-nav a { padding: 4px 0; }
+
+.desk-only, .desk-inline { display: none; }
+.grid-main { display: grid; gap: 12px; margin-top: 12px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 20px);
+  background: var(--green); color: var(--bg); padding: 10px 16px; border-radius: 12px;
+  opacity: 0; pointer-events: none; transition: .25s; z-index: 20; max-width: 90vw; font-size: 14px;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- desktop ---------- */
+@media (min-width: 900px) {
+  .app { flex-direction: row; }
+  .sidebar {
+    display: flex; flex-direction: column; gap: 24px;
+    width: 200px; flex: none; padding: 26px 18px;
+    background: var(--card); border-right: 1px solid var(--line);
+    position: sticky; top: 0; height: 100dvh;
+  }
+  .logo { font: 700 20px var(--serif); color: var(--green); padding-left: 6px; }
+  .side-nav { display: grid; gap: 6px; }
+  .side-nav a { padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-size: 14px; }
+  .side-nav a[aria-current="page"] { background: var(--green-tint); color: var(--ink); font-weight: 700; }
+  .side-nav a:hover { background: var(--green-tint); }
+  .sidebar .role-switch { margin-top: auto; align-self: stretch; }
+  .sidebar .role-switch button { flex: 1; padding: 7px 4px; }
+  .bottom-nav, .top-switch { display: none; }
+  .content { max-width: none; margin: 0; padding: 32px 40px 48px; }
+  .title { font-size: 28px; }
+  .desk-only { display: block; }
+  .title .desk-only { display: inline; }
+  .desk-inline { display: inline; }
+  .kpi.desk-only { display: flex; }
+  .mob-only { display: none; }
+  .grid-main { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-top: 14px; }
+  .grid-main > .card { min-height: 260px; }
+  .bars { height: 150px; }
+  .driver-top { display: grid; grid-template-columns: 1.3fr 2fr; gap: 14px; margin-top: 18px; }
+  .driver-top .stat { display: flex; flex-direction: column; justify-content: center; }
+  .routes-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; margin-top: 18px; align-items: start; }
+  .routes-layout .stack { margin-top: 0; }
+  .actions { display: flex; }
+  .actions .btn { width: auto; padding: 13px 22px; }
+  .toast { bottom: 32px; }
+  .row3.kpis { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 900px) and (max-width: 1100px) {
+  .grid-main, .routes-layout, .driver-top { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+@media print {
+  .sidebar, .bottom-nav, .top-switch, .no-print, .toast { display: none !important; }
+  .content { padding: 0; max-width: none; }
+}
+
+</style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="logo">EcoFrota</div>
+      <nav id="side-nav" class="side-nav"></nav>
+      <div id="role-switch-side" class="role-switch"></div>
+    </aside>
+    <div class="content">
+      <div id="role-switch-top" class="role-switch top-switch"></div>
+      <main id="view" tabindex="-1"></main>
+    </div>
+    <nav id="bottom-nav" class="bottom-nav" aria-label="Navegação principal"></nav>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+// Dados de demonstração do EcoFrota. Em produção, virão da API / telemetria.
+window.ECO = {
+  driver: { name: 'Carlos', fullName: 'Carlos Lima', vehicle: 'VUC-03' },
+
+  // Dia base (valores do protótipo)
+  today: { emitted: 42, avoided: 9, routes: 3, emptyTrips: 0 },
+  dailyHistory: [48, 45, 46, 41, 43, 38], // kg CO₂ emitidos nos últimos 6 dias
+
+  // Fator de emissão (kg CO₂/km) — diesel, caminhão-tanque. Valores calibrados com o protótipo.
+  routes: {
+    'centro-sul': {
+      label: 'Centro → Zona Sul',
+      current: { km: 32, min: 24, co2: 7.4 },
+      alt: { km: 29, min: 27, co2: 5.1 },
+    },
+    'centro-norte': {
+      label: 'Centro → Zona Norte',
+      current: { km: 41, min: 38, co2: 9.8 },
+      alt: { km: 38, min: 41, co2: 7.6 },
+    },
+    'porto-distrib': {
+      label: 'Porto → Distribuidora',
+      current: { km: 18, min: 22, co2: 5.2 },
+      alt: { km: 17, min: 24, co2: 4.3 },
+    },
+  },
+
+  manager: {
+    month: 'setembro/2026',
+    emitted: 3240,
+    avoided: 980,
+    goalPct: 72,
+    weeks: [820, 790, 770, 730, 700, 640], // CO₂ emitido por semana (kg)
+    ranking: [
+      { name: 'Ana Souza', pct: -24 },
+      { name: 'Carlos Lima', pct: -18 },
+      { name: 'João Pires', pct: -11 },
+      { name: 'Marta Reis', pct: -7 },
+      { name: 'Paulo Nunes', pct: -3 },
+    ],
+    fleet: [
+      { id: 'VUC-03', driver: 'Carlos Lima', dev: -18 },
+      { id: 'TQ-11', driver: 'Ana Souza', dev: -24 },
+      { id: 'TQ-14', driver: 'João Pires', dev: -11 },
+      { id: 'TQ-08', driver: 'Marta Reis', dev: -7 },
+      { id: 'TQ-02', driver: 'Paulo Nunes', dev: 4 },
+      { id: 'VUC-07', driver: 'Rafael Dias', dev: 22 },
+    ],
+  },
+
+  badges: [
+    { id: 'piloto', name: 'Piloto Eco', desc: '7 dias seguidos sem frenagem brusca', unlocked: true },
+    { id: 'rota', name: 'Rota Verde', desc: '10 rotas alternativas escolhidas', unlocked: false },
+    { id: 'meta', name: 'Meta do mês', desc: 'Atingir 100% da meta mensal de CO₂', unlocked: false },
+  ],
+};
+
+</script>
+  <script>
+(() => {
+  const D = window.ECO;
+  const $ = (sel) => document.querySelector(sel);
+  const fmt = (n, d = 0) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+  // ---------- estado persistido ----------
+  const KEY = 'ecofrota:v1';
+  const initialState = () => ({
+    emitted: D.today.emitted,
+    avoided: D.today.avoided,
+    routes: D.today.routes,
+    emptyTrips: D.today.emptyTrips,
+    altChosen: 0,
+    selectedRoute: 'centro-sul',
+    log: [],
+  });
+  const load = () => {
+    const base = initialState();
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+      for (const k of ['emitted', 'avoided', 'routes', 'emptyTrips', 'altChosen']) {
+        if (Number.isFinite(saved[k])) base[k] = saved[k];
+      }
+      if (saved.selectedRoute in D.routes) base.selectedRoute = saved.selectedRoute;
+      if (Array.isArray(saved.log)) base.log = saved.log;
+    } catch { /* usa o estado inicial */ }
+    return base;
+  };
+  let state = load();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* modo privado */ } };
+
+  // ---------- cálculos ----------
+  const savedPct = (r) => Math.round(((r.current.co2 - r.alt.co2) / r.current.co2) * 100);
+  const todayPct = () => Math.round((state.avoided / (state.emitted + state.avoided)) * 100);
+  const goalLabel = (pct) => `${fmt(pct)}%`;
+
+  // ---------- componentes ----------
+  const bars = (values, { labels, nowLast = true } = {}) => {
+    const max = Math.max(...values);
+    return `<div class="bars ${labels ? 'has-labels' : ''}" role="img" aria-label="Gráfico de barras: ${values.join(', ')}">
+      ${values.map((v, i) => `<div class="bar ${nowLast && i === values.length - 1 ? 'now' : ''}" style="height:${Math.round((v / max) * 100)}%" title="${fmt(v)} kg">${labels ? `<span>${labels[i]}</span>` : ''}</div>`).join('')}
+    </div>`;
+  };
+
+  const map = () => `
+    <div class="map" aria-hidden="true">
+      <svg viewBox="0 0 300 130" preserveAspectRatio="xMidYMid meet">
+        <path d="M16 112 C 70 112, 90 28, 150 30 S 240 30, 284 14" fill="none" stroke="var(--muted)" stroke-opacity=".45" stroke-width="5" stroke-linecap="round"/>
+        <path d="M16 114 C 70 116, 130 112, 170 90 S 240 40, 284 14" fill="none" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 8"/>
+        <circle cx="16" cy="113" r="6" fill="var(--green)"/>
+        <circle cx="284" cy="14" r="6" fill="var(--orange)"/>
+      </svg>
+    </div>`;
+
+  // ---------- telas ----------
+  const views = {};
+
+  views['motorista/inicio'] = () => {
+    const now = new Date();
+    const pct = todayPct();
+    const first = D.badges[0];
+    const dow = now.getDay();
+    const date = `${WEEKDAYS[dow]}${dow > 0 && dow < 6 ? '-feira' : ''}, ${now.getDate()} de ${MONTHS[now.getMonth()]}`;
+    return `
+      <p class="eyebrow">Olá, ${D.driver.name}<span class="desk-inline"> · ${date.toLowerCase()}</span></p>
+      <h1 class="title"><span class="mob-only">${date}</span><span class="desk-only">Seu impacto ambiental hoje</span></h1>
+      <div class="driver-top stack">
+        <section class="card" aria-label="CO₂ hoje versus referência">
+          <p class="label">CO₂ hoje vs. referência</p>
+          <p class="hero-num">−${pct}%</p>
+          <p class="eyebrow">${fmt(state.emitted, 0)} kg emitidos · ${fmt(state.avoided, 0)} kg evitados</p>
+        </section>
+        <div class="row2 driver-stats">
+          <div class="card tint stat"><b>${state.routes}</b><span class="label">Rotas hoje</span></div>
+          <div class="card tint stat"><b>${state.emptyTrips}</b><span class="label">Trajeto vazio</span></div>
+        </div>
+      </div>
+      <div class="grid-main">
+        <section class="card desk-only" aria-label="Evolução">
+          <p class="label">Evolução — últimos 6 dias</p>
+          ${bars(D.dailyHistory.slice(0, 5).concat([state.emitted]), { labels: ['S', 'T', 'Q', 'Q', 'S', 'H'] })}
+        </section>
+        <section class="card badge" aria-label="Selo conquistado">
+          <span class="ico" aria-hidden="true">★</span>
+          <div><b>Selo: ${first.name}</b><small>${first.desc}</small></div>
+        </section>
+      </div>
+      <div class="actions no-print"><a class="btn" href="#/motorista/rotas" style="text-decoration:none">Iniciar próxima rota</a></div>`;
+  };
+
+  views['motorista/rotas'] = () => {
+    const r = D.routes[state.selectedRoute];
+    const pct = savedPct(r);
+    const dMin = r.alt.min - r.current.min;
+    const dMinTxt = dMin > 0 ? `+${dMin} min` : `${dMin} min`;
+    return `
+      <p class="eyebrow">${r.label.replace('→', '→')}</p>
+      <h1 class="title">Rota sugerida</h1>
+      <div class="route-pick no-print" style="margin-top:12px" role="group" aria-label="Escolher trajeto">
+        ${Object.entries(D.routes).map(([k, v]) => `<button class="chip" data-route="${k}" aria-pressed="${k === state.selectedRoute}">${v.label}</button>`).join('')}
+      </div>
+      <div class="routes-layout">
+        ${map()}
+        <div class="stack">
+          <section class="card">
+            <h3>Rota atual</h3>
+            <div class="route-metrics">
+              <div><b>${r.current.km} km</b><span>distância</span></div>
+              <div><b>${r.current.min} min</b><span>tempo</span></div>
+              <div><b>${fmt(r.current.co2, 1)} kg</b><span>CO₂</span></div>
+            </div>
+          </section>
+          <section class="card sel">
+            <h3>Rota alternativa</h3>
+            <div class="route-metrics">
+              <div><b>${r.alt.km} km</b><span>distância</span></div>
+              <div><b>${r.alt.min} min</b><span>tempo</span></div>
+              <div><b>${fmt(r.alt.co2, 1)} kg</b><span>CO₂</span></div>
+            </div>
+            <p class="gain">−${pct}% de CO₂ · ${dMinTxt}</p>
+          </section>
+          <p class="eyebrow">A alternativa evita vias congestionadas e trechos de para-e-siga, reduzindo o consumo de diesel do caminhão-tanque.</p>
+        </div>
+      </div>
+      <div class="actions no-print">
+        <button class="btn" id="use-alt">Usar rota alternativa</button>
+        <button class="btn ghost" id="keep">Manter rota atual</button>
+      </div>`;
+  };
+
+  views['motorista/perfil'] = () => `
+    <p class="eyebrow">${D.driver.vehicle}</p>
+    <h1 class="title">${D.driver.fullName}</h1>
+    <div class="stack">
+      <section class="card"><p class="label">Rotas alternativas escolhidas</p><p class="hero-num">${state.altChosen}</p></section>
+      <section class="card">
+        <p class="label">Selos</p>
+        <div class="stack" style="margin-top:12px">
+          ${D.badges.map((b) => `<div class="badge ${b.unlocked ? '' : 'locked'}"><span class="ico" aria-hidden="true">${b.unlocked ? '★' : '☆'}</span><div><b>${b.name}</b><small>${b.desc}</small></div></div>`).join('')}
+        </div>
+      </section>
+      <button class="btn ghost no-print" id="reset">Reiniciar dados de demonstração</button>
+    </div>`;
+
+  views['gestor/painel'] = () => {
+    const m = D.manager;
+    return `
+      <p class="eyebrow">Frota — ${m.month}</p>
+      <h1 class="title">Painel do gestor</h1>
+      <div class="row3 kpis stack">
+        <section class="card kpi"><p class="label">CO₂ emitido</p><p class="val warn">${fmt(m.emitted)} <span class="unit">kg</span></p></section>
+        <section class="card kpi"><p class="label">CO₂ evitado</p><p class="val">${fmt(m.avoided)} <span class="unit">kg</span></p></section>
+        <section class="card kpi desk-only"><p class="label">Meta do mês</p><p class="val">${goalLabel(m.goalPct)}</p><div class="meter"><i style="width:${m.goalPct}%"></i></div></section>
+      </div>
+      <div class="grid-main">
+        <section class="card"><p class="label">Evolução — últimas 6 semanas</p>${bars(m.weeks, { labels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'] })}</section>
+        <section class="card"><p class="label">Ranking ambiental</p>
+          <ol class="rank">${m.ranking.slice(0, 3).map((p, i) => `<li><span class="n">0${i + 1}</span><span class="name">${p.name}</span><span class="pct">${p.pct}% CO₂</span></li>`).join('')}</ol>
+        </section>
+      </div>
+      <div style="margin-top:14px">${alerts()}</div>`;
+  };
+
+  const alerts = () => D.manager.fleet.filter((v) => v.dev > 15)
+    .map((v) => `<div class="alert" role="alert">⚠ Veículo ${v.id} está ${v.dev}% acima do padrão de emissão esperado.</div>`).join('');
+
+  views['gestor/frota'] = () => `
+    <p class="eyebrow">${D.manager.fleet.length} veículos monitorados</p>
+    <h1 class="title">Frota</h1>
+    <div class="stack">
+      <section class="card">
+        <table class="table">
+          <thead><tr><th>Veículo</th><th>Motorista</th><th>vs. esperado</th></tr></thead>
+          <tbody>${D.manager.fleet.map((v) => `<tr><td><b>${v.id}</b></td><td>${v.driver}</td><td><span class="tag ${v.dev > 15 ? 'warn' : ''}">${v.dev > 0 ? '+' : ''}${v.dev}%</span></td></tr>`).join('')}</tbody>
+        </table>
+      </section>
+      ${alerts()}
+      <p class="eyebrow">Acima de 15% do padrão: checar regulagem do motor, calibragem dos pneus e sistema de injeção.</p>
+    </div>`;
+
+  views['gestor/relatorios'] = () => {
+    const m = D.manager;
+    const total = m.emitted + m.avoided;
+    return `
+      <p class="eyebrow">Relatório ESG · ${m.month}</p>
+      <h1 class="title">Relatórios</h1>
+      <div class="stack">
+        <section class="card">
+          <p class="label">Redução frente ao cenário de referência</p>
+          <p class="hero-num">−${Math.round((m.avoided / total) * 100)}%</p>
+          <p class="eyebrow">${fmt(m.avoided)} kg de CO₂ evitados de ${fmt(total)} kg projetados</p>
+          <div class="meter"><i style="width:${m.goalPct}%"></i></div>
+          <p class="eyebrow" style="margin-top:6px">${m.goalPct}% da meta mensal atingida</p>
+        </section>
+        <section class="card">
+          <p class="label">Ranking completo</p>
+          <ol class="rank">${m.ranking.map((p, i) => `<li><span class="n">0${i + 1}</span><span class="name">${p.name}</span><span class="pct">${p.pct}% CO₂</span></li>`).join('')}</ol>
+        </section>
+        <div class="actions no-print">
+          <button class="btn" id="csv">Baixar CSV</button>
+          <button class="btn ghost" id="print">Imprimir / salvar PDF</button>
+        </div>
+      </div>`;
+  };
+
+  // ---------- navegação ----------
+  const NAV = {
+    motorista: [['inicio', 'Início'], ['rotas', 'Rotas'], ['perfil', 'Perfil']],
+    gestor: [['painel', 'Painel'], ['frota', 'Frota'], ['relatorios', 'Relatórios']],
+  };
+
+  const parse = () => {
+    const [role, page] = location.hash.replace(/^#\//, '').split('/');
+    const r = NAV[role] ? role : 'motorista';
+    const p = NAV[r].some(([k]) => k === page) ? page : NAV[r][0][0];
+    return { role: r, page: p };
+  };
+
+  const render = () => {
+    const { role, page } = parse();
+    const link = ([k, name]) => `<a href="#/${role}/${k}" ${k === page ? 'aria-current="page"' : ''}>${name}</a>`;
+    $('#side-nav').innerHTML = NAV[role].map(link).join('');
+    $('#bottom-nav').innerHTML = NAV[role].map(link).join('');
+    const sw = ['motorista', 'gestor'].map((r) => `<button data-role="${r}" aria-pressed="${r === role}">${r === 'motorista' ? 'Motorista' : 'Gestor'}</button>`).join('');
+    $('#role-switch-side').innerHTML = sw;
+    $('#role-switch-top').innerHTML = sw;
+    $('#view').innerHTML = views[`${role}/${page}`]();
+    document.title = `EcoFrota · ${NAV[role].find(([k]) => k === page)[1]}`;
+    bind(role, page);
+  };
+
+  const toast = (msg) => {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast.id);
+    toast.id = setTimeout(() => t.classList.remove('show'), 2800);
+  };
+
+  const download = (name, text, type) => {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const bind = (role, page) => {
+    document.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => { location.hash = `#/${b.dataset.role}`; }));
+    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+
+    document.querySelectorAll('[data-route]').forEach((b) => b.addEventListener('click', () => {
+      state.selectedRoute = b.dataset.route; save(); render();
+    }));
+
+    on('#use-alt', () => {
+      const r = D.routes[state.selectedRoute];
+      const saved = +(r.current.co2 - r.alt.co2).toFixed(1);
+      state.emitted = +(state.emitted + r.alt.co2).toFixed(1);
+      state.avoided = +(state.avoided + saved).toFixed(1);
+      state.routes += 1;
+      state.altChosen += 1;
+      state.log.push({ route: r.label, co2Saved: saved, at: new Date().toISOString() });
+      save();
+      toast(`Rota alternativa ativada · ${fmt(saved, 1)} kg de CO₂ evitados`);
+      setTimeout(() => { location.hash = '#/motorista/inicio'; }, 900);
+    });
+    on('#keep', () => {
+      const r = D.routes[state.selectedRoute];
+      state.emitted = +(state.emitted + r.current.co2).toFixed(1);
+      state.routes += 1;
+      save();
+      toast('Rota atual mantida');
+      setTimeout(() => { location.hash = '#/motorista/inicio'; }, 900);
+    });
+    on('#reset', () => { state = initialState(); save(); toast('Dados reiniciados'); render(); });
+    on('#print', () => window.print());
+    on('#csv', () => {
+      const m = D.manager;
+      const rows = [['posicao', 'motorista', 'variacao_co2_pct'], ...m.ranking.map((p, i) => [i + 1, p.name, p.pct])];
+      rows.push([], ['co2_emitido_kg', m.emitted], ['co2_evitado_kg', m.avoided], ['meta_pct', m.goalPct]);
+      download(`ecofrota-esg-${m.month.replace('/', '-')}.csv`, rows.map((r) => r.join(';')).join('\n'), 'text/csv;charset=utf-8');
+    });
+    window.scrollTo(0, 0);
+  };
+
+  window.addEventListener('hashchange', render);
+  render();
+
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+
+</script>
+</body>
+</html>

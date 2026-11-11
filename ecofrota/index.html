@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EcoFrota</title>
+  <meta name="theme-color" content="#2d4a36">
+  <meta name="description" content="Rotas com menor emissão de CO₂ para frotas de transporte de combustíveis">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="logo">EcoFrota</div>
+      <nav id="side-nav" class="side-nav"></nav>
+      <div id="role-switch-side" class="role-switch"></div>
+    </aside>
+    <div class="content">
+      <div id="role-switch-top" class="role-switch top-switch"></div>
+      <main id="view" tabindex="-1"></main>
+    </div>
+    <nav id="bottom-nav" class="bottom-nav" aria-label="Navegação principal"></nav>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
