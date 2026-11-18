@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Shell } from "@/components/Shell";
+import { isDemoMode } from "@/lib/db";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR">
       <body>
-        <Shell>{children}</Shell>
+        <Shell demo={isDemoMode()}>{children}</Shell>
       </body>
     </html>
   );

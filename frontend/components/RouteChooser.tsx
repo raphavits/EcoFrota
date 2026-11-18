@@ -1,71 +1,94 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { registerTripAction } from "@/app/actions";
 import { RouteMap } from "@/components/RouteMap";
-import type { RouteData, RouteOptionData } from "@/lib/api";
+import type { RouteMetrics, Segment } from "@/lib/types";
 import { kg, signed } from "@/lib/format";
 
-type Choice = "alternative" | "current";
+export type ChooserRoute = {
+  id: string;
+  origin: string;
+  destination: string;
+  current: Segment[];
+  alternative: Segment[];
+  comparison: { current: RouteMetrics; alternative: RouteMetrics; co2SavedPct: number; extraMinutes: number };
+};
 
-function Metrics({ o }: { o: RouteOptionData }) {
+function Metrics({ m }: { m: RouteMetrics }) {
   return (
     <div className="route-metrics">
-      <div><b>{o.distance_km} km</b><span>distância</span></div>
-      <div><b>{o.duration_min} min</b><span>tempo</span></div>
-      <div><b>{kg(o.co2_kg, 1)} kg</b><span>CO₂</span></div>
+      <div><b>{m.distanceKm} km</b><span>distância</span></div>
+      <div><b>{m.durationMin} min</b><span>tempo</span></div>
+      <div><b>{kg(m.co2Kg, 1)} kg</b><span>CO₂</span></div>
     </div>
   );
 }
 
-export function RouteChooser({ routes, driverId }: { routes: RouteData[]; driverId: number }) {
+function Streets({ segments }: { segments: Segment[] }) {
+  return (
+    <details className="streets">
+      <summary>Ver ruas do trajeto</summary>
+      <ol>
+        {segments.map((s, i) => (
+          <li key={i}>
+            <b>{s.street}</b> · {kg(s.km, 1)} km · {s.traffic}{s.stops ? ` · ${s.stops} paradas` : ""}
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}
+
+export function RouteChooser({ routes, driverId }: { routes: ChooserRoute[]; driverId: string }) {
   const router = useRouter();
-  const [slug, setSlug] = useState(routes[0]?.slug);
+  const origins = useMemo(() => [...new Set(routes.map((r) => r.origin))], [routes]);
+  const [origin, setOrigin] = useState(origins[0] ?? "");
+  const destinations = routes.filter((r) => r.origin === origin);
+  const [routeId, setRouteId] = useState(destinations[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const route = routes.find((r) => r.slug === slug);
+  const route = routes.find((r) => r.id === routeId) ?? destinations[0];
 
-  if (!route) return <p className="eyebrow">Nenhuma rota cadastrada.</p>;
+  if (!route) return <p className="eyebrow">Nenhuma rota cadastrada. Peça ao gestor para cadastrar em Rotas.</p>;
+  const c = route.comparison;
 
-  async function choose(choice: Choice) {
-    if (!route) return;
+  function changeOrigin(next: string) {
+    setOrigin(next);
+    setRouteId(routes.find((r) => r.origin === next)?.id ?? "");
+  }
+
+  async function choose(choice: "alternative" | "current") {
     setBusy(true);
     setMessage(null);
-    try {
-      const res = await fetch("/api/trips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ driver: driverId, route: route.id, choice }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
-      const body: { co2_avoided_kg: number; new_badges: { name: string }[] } = await res.json();
-      const badge = body.new_badges[0] ? ` · novo selo: ${body.new_badges[0].name}` : "";
-      setMessage(
-        choice === "alternative"
-          ? `Rota alternativa ativada · ${kg(body.co2_avoided_kg, 1)} kg de CO₂ evitados${badge}`
-          : "Rota atual mantida",
-      );
-      setTimeout(() => {
-        router.push("/motorista");
-        router.refresh();
-      }, 1200);
-    } catch {
+    const res = await registerTripAction(driverId, route.id, choice);
+    if ("error" in res && res.error) {
       setBusy(false);
-      setMessage("Não foi possível registrar a rota. Tente novamente.");
+      setMessage(res.error);
+      return;
     }
+    const badge = "newBadges" in res && res.newBadges?.length ? ` · novo selo: ${res.newBadges[0]}` : "";
+    setMessage(choice === "alternative" ? `Rota alternativa ativada · ${kg(res.co2AvoidedKg ?? 0, 1)} kg de CO₂ evitados${badge}` : "Rota atual mantida");
+    setTimeout(() => router.push("/motorista"), 1200);
   }
 
   return (
     <>
-      <p className="eyebrow">{route.label}</p>
+      <p className="eyebrow">{route.origin} → {route.destination}</p>
       <h1 className="title">Rota sugerida</h1>
 
-      <div className="route-pick" role="group" aria-label="Escolher trajeto">
-        {routes.map((r) => (
-          <button key={r.slug} type="button" className="chip" aria-pressed={r.slug === slug} onClick={() => setSlug(r.slug)}>
-            {r.label}
-          </button>
-        ))}
+      <div className="route-select">
+        <label className="field">Origem
+          <select value={origin} onChange={(e) => changeOrigin(e.target.value)}>
+            {origins.map((o) => <option key={o}>{o}</option>)}
+          </select>
+        </label>
+        <label className="field">Destino
+          <select value={route.id} onChange={(e) => setRouteId(e.target.value)}>
+            {destinations.map((r) => <option key={r.id} value={r.id}>{r.destination}</option>)}
+          </select>
+        </label>
       </div>
 
       <div className="routes-layout">
@@ -73,21 +96,23 @@ export function RouteChooser({ routes, driverId }: { routes: RouteData[]; driver
         <div className="stack">
           <section className="card">
             <h3>Rota atual</h3>
-            <Metrics o={route.current} />
+            <Metrics m={c.current} />
+            <Streets segments={route.current} />
           </section>
           <section className="card sel">
             <h3>Rota alternativa</h3>
-            <Metrics o={route.alternative} />
-            <p className="gain">−{route.co2_saved_pct}% de CO₂ · {signed(route.extra_minutes)} min</p>
+            <Metrics m={c.alternative} />
+            <p className={`gain${c.co2SavedPct < 0 ? " neg" : ""}`}>
+              {c.co2SavedPct >= 0 ? "−" : "+"}{Math.abs(c.co2SavedPct)}% de CO₂ · {signed(c.extraMinutes)} min
+            </p>
+            <Streets segments={route.alternative} />
           </section>
-          <p className="eyebrow">
-            A alternativa evita vias congestionadas e trechos de para-e-siga, reduzindo o consumo de diesel do caminhão-tanque.
-          </p>
+          <p className="eyebrow">O cálculo soma os trechos de cada rota: distância, tempo (com trânsito e paradas) e CO₂ (velocidade e para-e-siga aumentam o consumo).</p>
         </div>
       </div>
 
       <div className="actions">
-        <button className="btn" disabled={busy} onClick={() => choose("alternative")}>Usar rota alternativa</button>
+        <button className="btn" disabled={busy || c.co2SavedPct <= 0} onClick={() => choose("alternative")}>Usar rota alternativa</button>
         <button className="btn ghost" disabled={busy} onClick={() => choose("current")}>Manter rota atual</button>
       </div>
 

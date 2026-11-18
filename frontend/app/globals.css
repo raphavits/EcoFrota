@@ -211,3 +211,38 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .sidebar, .bottom-nav, .top-switch, .no-print, .toast { display: none !important; }
   .content { padding: 0; max-width: none; }
 }
+
+/* ---------- cadastros e formulários ---------- */
+.form { display: grid; gap: 14px; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.field input, .field select, .seg-table input, .seg-table select {
+  font: inherit; color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; width: 100%; min-width: 0;
+}
+.field input:focus-visible, .field select:focus-visible, .seg-table input:focus-visible, .seg-table select:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
+.form-actions, .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.form-error { background: var(--orange-tint); color: var(--orange); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.btn.small { display: inline-block; width: auto; padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+.btn.danger { background: var(--card); color: var(--orange); border-color: var(--orange-tint); }
+.seg-scroll { overflow-x: auto; }
+.seg-table { min-width: 560px; }
+.seg-table td { padding: 6px 6px 6px 0; }
+.seg-table th { white-space: nowrap; }
+.seg-editor { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px 14px; background: var(--card); display: grid; gap: 10px; }
+.seg-editor legend { font: 700 13px var(--sans); padding: 0 6px; }
+.callout { background: var(--green-tint); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.callout code, .eyebrow code { font-family: var(--mono); font-size: 12px; }
+.demo-banner { background: var(--orange-tint); color: var(--orange); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; }
+.route-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.streets { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.streets summary { cursor: pointer; }
+.streets ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.streets b { color: var(--ink); font-weight: 600; }
+.report-driver { display: flex; gap: 10px; align-items: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.report-driver .field { flex: 1; min-width: 180px; }
+.bottom-nav a { font-size: 9.5px; letter-spacing: .03em; }
+@media (min-width: 900px) {
+  .bottom-nav a { font-size: 11px; }
+  .route-select { max-width: 520px; }
+}

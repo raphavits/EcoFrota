@@ -5,6 +5,8 @@ export const kg = (n: number, digits = 0) => nf(digits).format(n);
 
 export const signed = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}`;
 
+export const dateBR = (iso: string) => iso.split("-").reverse().join("/");
+
 const TZ = "America/Sao_Paulo";
 
 export function longDate(iso: string) {

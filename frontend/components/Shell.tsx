@@ -13,11 +13,19 @@ const NAV = {
   gestor: [
     { href: "/gestor", label: "Painel" },
     { href: "/gestor/frota", label: "Frota" },
+    { href: "/gestor/motoristas", label: "Motoristas" },
+    { href: "/gestor/rotas", label: "Rotas" },
     { href: "/gestor/relatorios", label: "Relatórios" },
   ],
 } as const;
 
-export function Shell({ children }: { children: React.ReactNode }) {
+const ROOTS = new Set(["/motorista", "/gestor"]);
+
+/** O item fica ativo na própria página e nas páginas filhas (ex.: Rotas em /gestor/rotas/nova). */
+const isActive = (pathname: string, href: string) =>
+  pathname === href || (!ROOTS.has(href) && pathname.startsWith(`${href}/`));
+
+export function Shell({ children, demo = false }: { children: React.ReactNode; demo?: boolean }) {
   const pathname = usePathname();
   const role = pathname.startsWith("/gestor") ? "gestor" : "motorista";
 
@@ -28,7 +36,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const links = NAV[role].map((item) => (
-    <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
+    <Link key={item.href} href={item.href} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
       {item.label}
     </Link>
   ));
@@ -49,6 +57,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="content">
         <div className="role-switch top-switch">{switcher}</div>
+        {demo ? (
+          <p className="demo-banner" role="note">
+            Modo demonstração: sem Firebase configurado, os dados ficam só na memória e voltam ao padrão quando o servidor reinicia.
+          </p>
+        ) : null}
         <main>{children}</main>
       </div>
       <nav className="bottom-nav" aria-label="Navegação principal">{links}</nav>

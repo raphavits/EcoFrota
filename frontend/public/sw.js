@@ -12,7 +12,9 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const { request } = e;
-  if (request.method !== 'GET' || new URL(request.url).origin !== location.origin) return;
+  const url = new URL(request.url);
+  // PDFs e CSVs são sempre buscados na hora; só páginas e arquivos estáticos ficam disponíveis offline.
+  if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
   e.respondWith(
     fetch(request)
       .then((res) => {
